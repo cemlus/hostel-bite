@@ -25,7 +25,7 @@ npm install
 Create a `.env` file (copy from `.env.example` and fill in your values):
 
 ```env
-PORT=4000
+PORT=8080
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_strong_secret
 JWT_EXPIRES_IN=7d
@@ -38,7 +38,7 @@ Start the API:
 npm run dev
 ```
 
-The API runs at `http://localhost:4000`.
+The API runs at `http://localhost:8080`.
 
 ### 2. Frontend
 
@@ -50,7 +50,7 @@ npm install
 Create a `.env` file (copy from `.env.example`):
 
 ```env
-VITE_API_BASE_URL=http://localhost:4000
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 Start the dev server:
