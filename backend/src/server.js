@@ -1,14 +1,14 @@
 import http from 'http';
 import app from './app.js';
 import { connectDB } from './config/db.js';
-import { PORT } from './config/env.js';
+import { configs } from './config/env.js';
 
 const start = async () => {
   await connectDB();
   const server = http.createServer(app);
 
-  server.listen(PORT, () => {
-    console.log(`Server chal gaya http://localhost:${PORT}`);
+  server.listen(configs.PORT, () => {
+    console.log(`Server chal gaya http://localhost:${configs.PORT}`);
   });
 };
 

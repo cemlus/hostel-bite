@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import { MONGO_URI } from './env.js';
+import { configs } from './env.js';
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(MONGO_URI, {
+    await mongoose.connect(configs.MONGO_URI, {
       dbName: 'hostelbite'
     });
     console.log('MongoDB bhi chal gaya');

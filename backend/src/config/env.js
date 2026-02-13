@@ -1,10 +1,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const {
-  PORT = 4000,
-  MONGO_URI = 'mongodb://localhost:27017/hostelbite',
-  JWT_SECRET = 'please-change-this',
-  JWT_EXPIRES_IN = '7d',
-  NODE_ENV = 'development'
-} = process.env;
+export const configs = {
+  PORT : process.env.PORT,
+  MONGO_URI : process.env.MONGO_URI,
+  JWT_SECRET : process.env.JWT_SECRET,
+  JWT_EXPIRES_IN : process.env.JWT_EXPIRES_IN,
+  NODE_ENV : process.env.NODE_ENV
+} 
