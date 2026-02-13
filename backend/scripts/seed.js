@@ -67,7 +67,7 @@ const PRODUCTS = [
     price: 20,
     stock: 60,
     tags: ['chips', 'snack', 'lays'],
-    images: ['https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&q=80'],
+    images: ['https://m.media-amazon.com/images/I/81N8ZIGNTdL.jpg']
   },
   {
     name: 'Lays India\'s Magic Masala',
@@ -75,7 +75,7 @@ const PRODUCTS = [
     price: 20,
     stock: 60,
     tags: ['chips', 'snack', 'lays', 'masala'],
-    images: ['https://images.unsplash.com/photo-1613919113640-cb3f1c5f8e7a?w=400&q=80'],
+    images: ['https://m.media-amazon.com/images/I/815SeM4TDFL.jpg'],
   },
   {
     name: 'Kurkure Masala Munch',
@@ -83,7 +83,7 @@ const PRODUCTS = [
     price: 20,
     stock: 50,
     tags: ['chips', 'snack', 'kurkure'],
-    images: ['https://images.unsplash.com/photo-1613919113640-cb3f1c5f8e7a?w=400&q=80'],
+    images: ['https://tiimg.tistatic.com/fp/1/008/045/spicy-crunchy-kurkure-masala-munch-with-crispy-salty-taste-934.jpg'],
   },
   {
     name: 'Bingo Mad Angles',
@@ -91,15 +91,15 @@ const PRODUCTS = [
     price: 20,
     stock: 50,
     tags: ['chips', 'snack', 'bingo'],
-    images: ['https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&q=80'],
+    images: ['https://gandhifood.com/cdn/shop/products/81xkAhNVjRL._SL1500.jpg?v=1661873947'],
   },
   {
     name: 'Uncle Chipps',
-    description: 'Uncle Chipps classic salted - Indian potato chips',
+    description: 'Uncle Chipps classic masala - Indian potato chips',
     price: 20,
     stock: 40,
     tags: ['chips', 'snack'],
-    images: ['https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&q=80'],
+    images: ['https://www.bbassets.com/media/uploads/p/l/40320923_3-uncle-chips-spicy-treat-potato-chips-crispy-chips-snacks.jpg'],
   },
   // Chocolates
   {
@@ -108,7 +108,7 @@ const PRODUCTS = [
     price: 40,
     stock: 40,
     tags: ['chocolate', 'snack', 'nestle'],
-    images: ['https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=400&q=80'],
+    images: ['https://media.istockphoto.com/id/458090597/photo/kitkat-chocolate-candy-bar.jpg?s=612x612&w=0&k=20&c=PAsyRqB-SWZDCkMq6Obx30PT3zNaRq42QmMR5foKx5o='],
   },
   {
     name: 'Dairy Milk',
@@ -116,7 +116,7 @@ const PRODUCTS = [
     price: 50,
     stock: 40,
     tags: ['chocolate', 'cadbury', 'snack'],
-    images: ['https://images.unsplash.com/photo-1511381939415-e44015466834?w=400&q=80'],
+    images: ['https://www.bigbasket.com/media/uploads/p/m/40307753_6-cadbury-dairy-milk-chocolate-bar.jpg']
   },
   {
     name: 'Dairy Milk Silk',
@@ -124,7 +124,7 @@ const PRODUCTS = [
     price: 60,
     stock: 30,
     tags: ['chocolate', 'cadbury', 'snack'],
-    images: ['https://images.unsplash.com/photo-1511381939415-e44015466834?w=400&q=80'],
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvCw0zTuKegKch_yvavYjTWVDlhbjMoLSt4A&s']
   },
   {
     name: 'Milkybar',
@@ -132,7 +132,7 @@ const PRODUCTS = [
     price: 30,
     stock: 40,
     tags: ['chocolate', 'white', 'nestle', 'snack'],
-    images: ['https://images.unsplash.com/photo-1606312619070-d48b4c392a43?w=400&q=80'],
+    images: ['https://www.snackspause.com/cdn/shop/files/milky2.png?v=1722728228&width=493'],
   },
   {
     name: '5 Star',
@@ -140,7 +140,7 @@ const PRODUCTS = [
     price: 40,
     stock: 35,
     tags: ['chocolate', 'cadbury', 'snack'],
-    images: ['https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=400&q=80'],
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8NC2aqp6bE4BYJV1i_Xq12t-Uk0512vd1qw&s'],
   },
   {
     name: 'Perk',
@@ -148,7 +148,7 @@ const PRODUCTS = [
     price: 20,
     stock: 50,
     tags: ['chocolate', 'cadbury', 'wafer', 'snack'],
-    images: ['https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=400&q=80'],
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzvqB24L6cbcl1P_gEDvQysdjzxzyj---3BQ&s']
   },
 ];
 
