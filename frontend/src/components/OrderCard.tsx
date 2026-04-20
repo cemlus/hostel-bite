@@ -7,13 +7,16 @@ export interface Order {
   _id: string;
   id?: string;
   items: Array<{
-    productId: string;
+    // Backend uses `product` (ObjectId) + `unitPrice`; frontend mocks use `productId` + `price`.
+    productId?: string;
+    product?: string;
     name: string;
     quantity: number;
-    price: number;
+    price?: number;
+    unitPrice?: number;
   }>;
   total: number;
-  status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
   deliveryMode: 'delivery' | 'pickup';
   room?: string;
   paymentMethod: 'upi' | 'cod';
@@ -31,8 +34,8 @@ interface OrderCardProps {
 }
 
 const statusConfig = {
-  pending: {
-    label: 'Pending',
+  placed: {
+    label: 'Placed',
     icon: Clock,
     className: 'bg-amber-100 text-amber-700',
   },
@@ -51,6 +54,11 @@ const statusConfig = {
     icon: CheckCircle,
     className: 'bg-green-100 text-green-700',
   },
+  out_for_delivery: {
+    label: 'Out for delivery',
+    icon: Truck,
+    className: 'bg-blue-100 text-blue-700',
+  },
   delivered: {
     label: 'Delivered',
     icon: Truck,
@@ -64,15 +72,16 @@ const statusConfig = {
 };
 
 const nextStatus: Record<string, string> = {
-  pending: 'accepted',
+  placed: 'accepted',
   accepted: 'preparing',
   preparing: 'ready',
-  ready: 'delivered',
+  ready: 'out_for_delivery',
+  out_for_delivery: 'delivered',
 };
 
 export function OrderCard({ order, showShopActions, onStatusUpdate }: OrderCardProps) {
   const orderId = order._id || order.id || '';
-  const config = statusConfig[order.status] || statusConfig.pending;
+  const config = statusConfig[order.status] || statusConfig.placed;
   const StatusIcon = config.icon;
 
   const formatDate = (date: string) => {
@@ -114,7 +123,7 @@ export function OrderCard({ order, showShopActions, onStatusUpdate }: OrderCardP
             <span className="text-muted-foreground">
               {item.quantity}x {item.name}
             </span>
-            <span className="font-medium">{formatINR(item.price * item.quantity)}</span>
+            <span className="font-medium">{formatINR((item.price ?? item.unitPrice ?? 0) * item.quantity)}</span>
           </div>
         ))}
         {order.items.length > 3 && (

@@ -100,14 +100,23 @@ export default function Products() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [search, selectedTag]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<Product[]>(ENDPOINTS.PRODUCTS.LIST);
-      if (response.data) {
-        setProducts(response.data);
+      const qs = new URLSearchParams();
+      if (search.trim()) qs.set('search', search.trim());
+      if (selectedTag !== 'All') qs.set('tags', selectedTag);
+      qs.set('page', '1');
+      qs.set('pageSize', '50');
+
+      const response = await api.get<{ items: Product[] }>(
+        `${ENDPOINTS.PRODUCTS.LIST}?${qs.toString()}`
+      );
+
+      if (response.data?.items) {
+        setProducts(response.data.items);
       } else {
         // Use mock data if API fails
         setProducts(MOCK_PRODUCTS);
@@ -139,18 +148,7 @@ export default function Products() {
     }
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      !search ||
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.description?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesTag =
-      selectedTag === 'All' ||
-      product.tags?.some((tag) => tag.toLowerCase() === selectedTag.toLowerCase());
-
-    return matchesSearch && matchesTag;
-  });
+  const filteredProducts = products;
 
   return (
     <div className="container-wide py-8">

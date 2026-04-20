@@ -10,7 +10,9 @@ interface DashboardStats {
   totalProducts: number;
   activeProducts: number;
   totalOrders: number;
-  pendingOrders: number;
+  placedOrders: number;
+  revenueToday: number;
+  revenueWindow: number;
 }
 
 export default function OwnerDashboard() {
@@ -18,7 +20,9 @@ export default function OwnerDashboard() {
     totalProducts: 0,
     activeProducts: 0,
     totalOrders: 0,
-    pendingOrders: 0,
+    placedOrders: 0,
+    revenueToday: 0,
+    revenueWindow: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,18 +33,30 @@ export default function OwnerDashboard() {
   const fetchStats = async () => {
     setIsLoading(true);
     try {
-      // Fetch products and orders to calculate stats
-      const [productsRes, ordersRes] = await Promise.all([
-        api.get<{ products: unknown[] }>(ENDPOINTS.PRODUCTS.LIST),
-        api.get<{ orders: unknown[] }>(ENDPOINTS.ORDERS.SHOP_LIST),
+      const [productsRes, ordersRes, analyticsRes] = await Promise.all([
+        api.get<{ items: Array<{ isActive?: boolean }> }>(ENDPOINTS.PRODUCTS.LIST),
+        api.get<{ items: unknown[] }>(ENDPOINTS.ORDERS.SHOP_LIST),
+        api.get<{
+          ordersByStatus: Array<{ _id: string; count: number }>;
+          totals: { orders: number; revenue: number };
+          today: { orders: number; revenue: number };
+        }>('/orders/shop/analytics?sinceDays=7&topN=5'),
       ]);
 
-      // Mock stats for demo
+      const products = productsRes.data?.items ?? [];
+      const totalProducts = products.length;
+      const activeProducts = products.filter((p) => p.isActive !== false).length;
+
+      const placedCount =
+        analyticsRes.data?.ordersByStatus?.find((s) => s._id === 'placed')?.count ?? 0;
+
       setStats({
-        totalProducts: 6,
-        activeProducts: 5,
-        totalOrders: 24,
-        pendingOrders: 3,
+        totalProducts,
+        activeProducts,
+        totalOrders: analyticsRes.data?.totals?.orders ?? (ordersRes.data?.items?.length ?? 0),
+        placedOrders: placedCount,
+        revenueToday: analyticsRes.data?.today?.revenue ?? 0,
+        revenueWindow: analyticsRes.data?.totals?.revenue ?? 0,
       });
     } catch {
       // Mock stats
@@ -48,7 +64,9 @@ export default function OwnerDashboard() {
         totalProducts: 6,
         activeProducts: 5,
         totalOrders: 24,
-        pendingOrders: 3,
+        placedOrders: 3,
+        revenueToday: 0,
+        revenueWindow: 0,
       });
     } finally {
       setIsLoading(false);
@@ -75,8 +93,8 @@ export default function OwnerDashboard() {
       color: 'bg-purple-500',
     },
     {
-      label: 'Pending Orders',
-      value: stats.pendingOrders,
+      label: 'Placed Orders',
+      value: stats.placedOrders,
       icon: Clock,
       color: 'bg-amber-500',
     },

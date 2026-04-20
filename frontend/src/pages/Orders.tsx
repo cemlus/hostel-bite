@@ -48,9 +48,9 @@ export default function Orders() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<Order[]>(ENDPOINTS.ORDERS.MINE);
-      if (response.data) {
-        setOrders(response.data);
+      const response = await api.get<{ items: Order[] }>(`${ENDPOINTS.ORDERS.MINE}?limit=50`);
+      if (response.data?.items) {
+        setOrders(response.data.items);
       } else {
         setOrders(MOCK_ORDERS);
       }

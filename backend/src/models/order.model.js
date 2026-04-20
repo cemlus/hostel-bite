@@ -23,4 +23,9 @@ const orderSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Efficient list views (cursor pagination & tabs)
+orderSchema.index({ user: 1, createdAt: -1, _id: -1 });
+orderSchema.index({ shop: 1, createdAt: -1, _id: -1 });
+orderSchema.index({ shop: 1, status: 1, createdAt: -1 });
+
 export const Order = mongoose.model('Order', orderSchema);

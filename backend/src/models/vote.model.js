@@ -6,5 +6,7 @@ const voteSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 voteSchema.index({ user: 1, product: 1 }, { unique: true });
+voteSchema.index({ product: 1 });
+voteSchema.index({ product: 1, createdAt: -1 });
 
 export const Vote = mongoose.model('Vote', voteSchema);

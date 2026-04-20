@@ -37,9 +37,9 @@ export default function OwnerProducts() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<Product[]>(ENDPOINTS.PRODUCTS.LIST);
-      if (response.data) {
-        setProducts(response.data);
+      const response = await api.get<{ items: Product[] }>(`${ENDPOINTS.PRODUCTS.LIST}?page=1&pageSize=100`);
+      if (response.data?.items) {
+        setProducts(response.data.items);
       } else {
         setProducts(MOCK_PRODUCTS);
       }

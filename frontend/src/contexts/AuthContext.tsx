@@ -55,6 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const normalizeUser = (userData: User): User => ({
     ...userData,
     id: userData.id || userData._id || '',
+    // Backend uses 'student' | 'shop_owner' | 'admin'. Frontend uses 'buyer' | 'owner' | 'admin'.
+    role:
+      // @ts-expect-error - allow backend role values and normalize them
+      userData.role === 'shop_owner' ? 'owner' :
+      // @ts-expect-error - allow backend role values and normalize them
+      userData.role === 'student' ? 'buyer' :
+      userData.role,
   });
 
   const logout = useCallback(() => {
@@ -71,9 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await api.get<{ user: User }>(ENDPOINTS.AUTH.ME);
-      if (response.data?.user) {
-        const normalizedUser = normalizeUser(response.data.user);
+      const response = await api.get<User>(ENDPOINTS.AUTH.ME);
+      if (response.data) {
+        const normalizedUser = normalizeUser(response.data);
         setUser(normalizedUser);
         localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
       } else if (response.error) {
