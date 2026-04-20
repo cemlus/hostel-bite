@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Bell, User, Menu, X, Home as HomeIcon, Package, LogOut } from 'lucide-react';
+import { ShoppingCart, Bell, User, Menu, X, Home as HomeIcon, Package, LogOut, Store } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -35,6 +35,9 @@ export function NavBar() {
             <>
               <Link to="/products" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Browse
+              </Link>
+              <Link to="/shops" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Shops
               </Link>
               <Link to="/orders" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 My Orders
@@ -129,6 +132,14 @@ export function NavBar() {
               >
                 <Package className="h-5 w-5" />
                 Browse Products
+              </Link>
+              <Link
+                to="/shops"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <Store className="h-5 w-5" />
+                Browse Shops
               </Link>
               <Link
                 to="/orders"

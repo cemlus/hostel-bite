@@ -13,6 +13,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
+import Shops from "./pages/Shops";
+import ShopDetail from "./pages/ShopDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
@@ -26,6 +28,7 @@ import OwnerProducts from "./pages/owner/OwnerProducts";
 import NewProduct from "./pages/owner/NewProduct";
 import OwnerOrders from "./pages/owner/OwnerOrders";
 import ShopSettings from "./pages/owner/ShopSettings";
+import EditProduct from "./pages/owner/EditProduct";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +57,8 @@ const App = () => (
                           <Route path="/" element={<Index />} />
                           <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
                           <Route path="/products/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+                          <Route path="/shops" element={<ProtectedRoute><Shops /></ProtectedRoute>} />
+                          <Route path="/shops/:id" element={<ProtectedRoute><ShopDetail /></ProtectedRoute>} />
                           <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
                           <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
@@ -65,6 +70,7 @@ const App = () => (
                           <Route path="/owner" element={<ProtectedRoute requireOwner><OwnerDashboard /></ProtectedRoute>} />
                           <Route path="/owner/products" element={<ProtectedRoute requireOwner><OwnerProducts /></ProtectedRoute>} />
                           <Route path="/owner/products/new" element={<ProtectedRoute requireOwner><NewProduct /></ProtectedRoute>} />
+                          <Route path="/owner/products/:id/edit" element={<ProtectedRoute requireOwner><EditProduct /></ProtectedRoute>} />
                           <Route path="/owner/orders" element={<ProtectedRoute requireOwner><OwnerOrders /></ProtectedRoute>} />
                           <Route path="/owner/settings" element={<ProtectedRoute requireOwner><ShopSettings /></ProtectedRoute>} />
                           

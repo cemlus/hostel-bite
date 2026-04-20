@@ -1,29 +1,91 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Store, Phone, MapPin, Clock } from 'lucide-react';
+import { ArrowLeft, Store, Phone, MapPin, Clock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToastNotify } from '@/components/Toast';
+import api from '@/api/client';
+import { ENDPOINTS } from '@/api/endpoints';
+
+interface Shop {
+  _id: string;
+  name: string;
+  description?: string;
+  open: boolean;
+  openTime?: string;
+  closeTime?: string;
+  phone?: string;
+  upiId?: string;
+  location?: string;
+}
 
 export default function ShopSettings() {
   const toast = useToastNotify();
 
-  const [shopName, setShopName] = useState('Night Owl Canteen');
-  const [phone, setPhone] = useState('9876543210');
-  const [upiId, setUpiId] = useState('nightowl@upi');
-  const [location, setLocation] = useState('Near Main Gate');
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [shopName, setShopName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [upiId, setUpiId] = useState('');
+  const [location, setLocation] = useState('');
   const [isOpen, setIsOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    fetchShop();
+  }, []);
+
+  const fetchShop = async () => {
+    try {
+      const response = await api.get<Shop>(ENDPOINTS.SHOPS.MINE);
+      if (response.data) {
+        const s = response.data;
+        setShop(s);
+        setShopName(s.name);
+        setPhone(s.phone || '');
+        setUpiId(s.upiId || '');
+        setLocation(s.location || '');
+        setIsOpen(s.open);
+      }
+    } catch (err) {
+      toast.error('Failed to load shop settings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (!shop) return;
     
-    toast.success('Settings saved!');
-    setIsLoading(false);
+    setIsSaving(true);
+    try {
+      const response = await api.patch(ENDPOINTS.SHOPS.DETAIL(shop._id), {
+        name: shopName,
+        phone,
+        upiId,
+        location,
+        open: isOpen,
+      });
+
+      if (response.error) {
+        toast.error(response.error);
+      } else {
+        toast.success('Settings saved!');
+      }
+    } catch (err) {
+      toast.error('Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container-wide py-32 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container-wide py-8">
@@ -130,8 +192,8 @@ export default function ShopSettings() {
           </div>
 
           {/* Submit */}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Settings'}
+          <Button type="submit" className="w-full" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         </form>
       </div>

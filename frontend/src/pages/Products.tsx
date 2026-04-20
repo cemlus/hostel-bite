@@ -112,7 +112,7 @@ export default function Products() {
       qs.set('pageSize', '50');
 
       const response = await api.get<{ items: Product[] }>(
-        `${ENDPOINTS.PRODUCTS.LIST}?${qs.toString()}`
+        `${ENDPOINTS.PRODUCTS.RANKED}?${qs.toString()}`
       );
 
       if (response.data?.items) {

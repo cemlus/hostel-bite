@@ -35,6 +35,7 @@ interface RegisterData {
   phone?: string;
   hostelId?: string;
   room?: string;
+  role?: 'student' | 'owner';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,12 +135,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (data: RegisterData) => {
     try {
+      const payload = {
+        ...data,
+        hostel: data.hostelId,
+        role: data.role === 'owner' ? 'shop_owner' : 'student',
+      };
+
       const response = await api.post<{ user: User; token: string }>(
         ENDPOINTS.AUTH.REGISTER,
-        data
+        payload
       );
-      console.log(response);
-      console.log(data);
       
       if (response.error) {
         return { success: false, error: response.error };

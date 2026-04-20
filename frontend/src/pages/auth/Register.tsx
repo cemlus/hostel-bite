@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToastNotify } from '@/components/Toast';
 import { validateEmail, validatePassword, validateName, validatePhone } from '@/utils/validators';
+import api from '@/api/client';
+import { ENDPOINTS } from '@/api/endpoints';
+import { cn } from '@/lib/utils';
+
+interface Hostel {
+  _id: string;
+  name: string;
+}
 
 export default function Register() {
   const navigate = useNavigate();
@@ -16,9 +24,27 @@ export default function Register() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [room, setRoom] = useState('');
+  const [hostelId, setHostelId] = useState('');
+  const [role, setRole] = useState<'student' | 'owner'>('student');
+  const [hostels, setHostels] = useState<Hostel[]>([]);
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchHostels = async () => {
+      try {
+        const response = await api.get<Hostel[]>(ENDPOINTS.HOSTELS.LIST);
+        if (response.data) {
+          setHostels(response.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch hostels:', err);
+      }
+    };
+    fetchHostels();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +60,7 @@ export default function Register() {
     if (!emailValidation.valid) newErrors.email = emailValidation.error!;
     if (!passwordValidation.valid) newErrors.password = passwordValidation.error!;
     if (!phoneValidation.valid) newErrors.phone = phoneValidation.error!;
+    if (!hostelId) newErrors.hostelId = 'Please select a hostel';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -49,11 +76,13 @@ export default function Register() {
       password,
       phone: phone.trim() || undefined,
       room: room.trim() || undefined,
+      hostelId,
+      role,
     });
     
     if (result.success) {
       toast.success('Account created successfully!');
-      navigate('/products', { replace: true });
+      navigate(role === 'owner' ? '/owner' : '/products', { replace: true });
     } else {
       toast.error(result.error || 'Registration failed');
     }
@@ -80,10 +109,43 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Role Selection */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                I am a...
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRole('student')}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium rounded-lg border transition-all',
+                    role === 'student'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-input hover:border-primary/50'
+                  )}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('owner')}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium rounded-lg border transition-all',
+                    role === 'owner'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-input hover:border-primary/50'
+                  )}
+                >
+                  Shop Owner
+                </button>
+              </div>
+            </div>
+
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
-                Full Name
+                Full Name *
               </label>
               <input
                 type="text"
@@ -102,7 +164,7 @@ export default function Register() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
-                Email
+                Email *
               </label>
               <input
                 type="email"
@@ -118,44 +180,70 @@ export default function Register() {
               )}
             </div>
 
-            {/* Phone */}
+            {/* Hostel Selection */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5">
-                Phone <span className="text-muted-foreground">(optional)</span>
+              <label htmlFor="hostel" className="block text-sm font-medium text-foreground mb-1.5">
+                Hostel *
               </label>
-              <input
-                type="tel"
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="9876543210"
-                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                autoComplete="tel"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-xs text-destructive">{errors.phone}</p>
+              <select
+                id="hostel"
+                value={hostelId}
+                onChange={(e) => setHostelId(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                required
+              >
+                <option value="">Select your hostel</option>
+                {hostels.map((h) => (
+                  <option key={h._id} value={h._id}>
+                    {h.name}
+                  </option>
+                ))}
+              </select>
+              {errors.hostelId && (
+                <p className="mt-1 text-xs text-destructive">{errors.hostelId}</p>
               )}
             </div>
 
-            {/* Room */}
-            <div>
-              <label htmlFor="room" className="block text-sm font-medium text-foreground mb-1.5">
-                Room Number <span className="text-muted-foreground">(optional)</span>
-              </label>
-              <input
-                type="text"
-                id="room"
-                value={room}
-                onChange={(e) => setRoom(e.target.value)}
-                placeholder="e.g., A-101"
-                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+            <div className="grid gap-4 grid-cols-2">
+              {/* Phone */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="9876543210"
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  autoComplete="tel"
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-xs text-destructive">{errors.phone}</p>
+                )}
+              </div>
+
+              {/* Room */}
+              <div>
+                <label htmlFor="room" className="block text-sm font-medium text-foreground mb-1.5">
+                  Room
+                </label>
+                <input
+                  type="text"
+                  id="room"
+                  value={room}
+                  onChange={(e) => setRoom(e.target.value)}
+                  placeholder="e.g., A-101"
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
             </div>
 
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
-                Password
+                Password *
               </label>
               <div className="relative">
                 <input

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useToastNotify } from '@/components/Toast';
@@ -14,15 +14,16 @@ interface Product {
   name: string;
   price: number;
   stock: number;
+  score?: number;
   images?: string[];
   tags?: string[];
 }
 
 // Mock data
 const MOCK_PRODUCTS: Product[] = [
-  { _id: '1', name: 'Maggi Noodles', price: 30, stock: 50, images: ['https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200'], tags: ['Snacks'] },
-  { _id: '2', name: 'Chai & Biscuits', price: 20, stock: 100, images: ['https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200'], tags: ['Beverages'] },
-  { _id: '3', name: 'Sandwich', price: 50, stock: 25, images: ['https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=200'], tags: ['Meals'] },
+  { _id: '1', name: 'Maggi Noodles', price: 30, stock: 50, score: 42, images: ['https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200'], tags: ['Snacks'] },
+  { _id: '2', name: 'Chai & Biscuits', price: 20, stock: 100, score: 85, images: ['https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200'], tags: ['Beverages'] },
+  { _id: '3', name: 'Sandwich', price: 50, stock: 25, score: 63, images: ['https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=200'], tags: ['Meals'] },
 ];
 
 export default function OwnerProducts() {
@@ -37,7 +38,7 @@ export default function OwnerProducts() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<{ items: Product[] }>(`${ENDPOINTS.PRODUCTS.LIST}?page=1&pageSize=100`);
+      const response = await api.get<{ items: Product[] }>(`${ENDPOINTS.PRODUCTS.RANKED}?page=1&pageSize=100`);
       if (response.data?.items) {
         setProducts(response.data.items);
       } else {
@@ -127,6 +128,10 @@ export default function OwnerProducts() {
                 <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="font-medium text-foreground">{formatINR(product.price)}</span>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <ThumbsUp className="h-3 w-3" />
+                    {product.score ?? 0}
+                  </div>
                   <span className={cn(
                     'text-sm',
                     product.stock > 0 ? 'text-muted-foreground' : 'text-destructive'

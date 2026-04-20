@@ -40,7 +40,7 @@ export default function OwnerDashboard() {
           ordersByStatus: Array<{ _id: string; count: number }>;
           totals: { orders: number; revenue: number };
           today: { orders: number; revenue: number };
-        }>('/orders/shop/analytics?sinceDays=7&topN=5'),
+        }>(`${ENDPOINTS.ORDERS.SHOP_ANALYTICS}?sinceDays=7&topN=5`),
       ]);
 
       const products = productsRes.data?.items ?? [];
