@@ -15,7 +15,7 @@ const MOCK_ORDERS: Order[] = [
       { productId: '2', name: 'Chai', quantity: 1, price: 20 },
     ],
     total: 80,
-    status: 'pending',
+    status: 'placed',
     deliveryMode: 'delivery',
     room: 'A-101',
     paymentMethod: 'upi',
@@ -46,7 +46,7 @@ const MOCK_ORDERS: Order[] = [
   },
 ];
 
-const tabs = ['all', 'pending', 'accepted', 'preparing', 'ready', 'delivered'] as const;
+const tabs = ['all', 'placed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered'] as const;
 type Tab = typeof tabs[number];
 
 export default function OwnerOrders() {
@@ -62,9 +62,9 @@ export default function OwnerOrders() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<Order[]>(ENDPOINTS.ORDERS.SHOP_LIST);
-      if (response.data) {
-        setOrders(response.data);
+      const response = await api.get<{ items: Order[] }>(`${ENDPOINTS.ORDERS.SHOP_LIST}?limit=50`);
+      if (response.data?.items) {
+        setOrders(response.data.items);
       } else {
         setOrders(MOCK_ORDERS);
       }

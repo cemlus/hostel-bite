@@ -60,11 +60,16 @@ class ApiClient {
         }
 
         return {
-          error: data.message || data.error || `Error: ${response.status}`,
+          error: data?.message || data?.error || `Error: ${response.status}`,
         };
       }
 
-      return data;
+      // Backend convention is { data: <payload> }. Normalize to { data: <payload> } for callers.
+      if (data && typeof data === 'object' && 'data' in data) {
+        return { data: (data as { data: T }).data };
+      }
+
+      return { data: data as T };
     } catch (error) {
       console.error('API request failed:', error);
       return {

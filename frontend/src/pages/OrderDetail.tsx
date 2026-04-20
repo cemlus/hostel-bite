@@ -10,10 +10,12 @@ import { cn } from '@/lib/utils';
 interface OrderDetail {
   _id: string;
   items: Array<{
-    productId: string;
+    productId?: string;
+    product?: string;
     name: string;
     quantity: number;
-    price: number;
+    price?: number;
+    unitPrice?: number;
   }>;
   total: number;
   status: string;
@@ -28,7 +30,7 @@ interface OrderDetail {
   };
 }
 
-const statusSteps = ['pending', 'accepted', 'preparing', 'ready', 'delivered'];
+const statusSteps = ['placed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -218,7 +220,7 @@ export default function OrderDetail() {
                 <span className="text-muted-foreground">
                   {item.quantity}x {item.name}
                 </span>
-                <span className="font-medium">{formatINR(item.price * item.quantity)}</span>
+                <span className="font-medium">{formatINR((item.price ?? item.unitPrice ?? 0) * item.quantity)}</span>
               </div>
             ))}
           </div>

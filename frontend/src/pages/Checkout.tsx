@@ -69,23 +69,21 @@ export default function Checkout() {
         orderData
       );
 
-      if (response.data) {
-        setOrderSuccess(response.data.orderId);
-        clearCart();
-        toast.success('Order placed successfully!');
-      } else {
-        // Mock success for demo
-        const mockOrderId = Math.random().toString(36).slice(2, 8).toUpperCase();
-        setOrderSuccess(mockOrderId);
-        clearCart();
-        toast.success('Order placed successfully!');
+      if (response.error) {
+        toast.error(response.error);
+        return;
       }
-    } catch {
-      // Mock success for demo
-      const mockOrderId = Math.random().toString(36).slice(2, 8).toUpperCase();
-      setOrderSuccess(mockOrderId);
+
+      if (!response.data) {
+        toast.error('Failed to place order');
+        return;
+      }
+
+      setOrderSuccess(response.data.orderId);
       clearCart();
       toast.success('Order placed successfully!');
+    } catch {
+      toast.error('Failed to place order');
     } finally {
       setIsLoading(false);
     }
