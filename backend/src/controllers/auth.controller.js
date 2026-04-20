@@ -6,7 +6,7 @@ import { ApiError } from '../utils/ApiError.js';
 import mongoose from 'mongoose';
 
 export const register = asyncHandler(async (req, res) => {
-    const { name, email, password, hostel: hostelInput, room } = req.body;
+    const { name, email, password, hostel: hostelInput, room, role } = req.body;
     if (!name || !password) throw new ApiError(400, 'Name and password required');
 
     if (email) {
@@ -30,13 +30,14 @@ export const register = asyncHandler(async (req, res) => {
         }
     }
 
+    const userRole = ['student', 'shop_owner'].includes(role) ? role : 'student';
     const passwordHash = await User.hashPassword(password);
-    const user = await User.create({ name, email, passwordHash, hostel: hostelId, room })
+    const user = await User.create({ name, email, passwordHash, hostel: hostelId, room, role: userRole })
     const token = signToken({ sub: user._id });
 
     res.status(201).json({
         data: {
-            user: { id: user._id, name: user.name, email: user.email, hostel: user.hostel, room: user.room },
+            user: { id: user._id, name: user.name, email: user.email, hostel: user.hostel, room: user.room, role: user.role },
             token
         }
     });

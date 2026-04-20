@@ -10,7 +10,8 @@ export const createProduct = asyncHandler(async (req, res) => {
     const ownerId = req.user._id;
     const hostelId = req.user.hostel;
 
-    if (!name || !price) throw new ApiError(400, 'name and price required');
+    if (!name || price === undefined) throw new ApiError(400, 'name and price required');
+    if (!hostelId) throw new ApiError(400, 'User must be associated with a hostel to create products');
 
     let shop = await Shop.findOne({ owner: ownerId });
     if (!shop) {
