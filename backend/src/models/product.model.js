@@ -12,4 +12,13 @@ const productSchema = new mongoose.Schema({
   images: [String]
 }, { timestamps: true });
 
+// Common browse filters (hostel/shop + active)
+productSchema.index({ hostel: 1, shop: 1, isActive: 1 });
+productSchema.index({ shop: 1, isActive: 1 });
+productSchema.index({ hostel: 1, isActive: 1, price: 1 });
+productSchema.index({ tags: 1, isActive: 1 });
+
+// Search (fast ranked search via $text)
+productSchema.index({ name: 'text', description: 'text' });
+
 export const Product = mongoose.model('Product', productSchema);

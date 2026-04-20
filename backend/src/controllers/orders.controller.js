@@ -105,8 +105,34 @@ export const getOrder = asyncHandler(async (req, res) => {
 });
 
 export const listMyOrders = asyncHandler(async (req, res) => {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).lean();
-    res.json({ data: orders });
+    const { limit = '20', cursor, status } = req.query;
+    const limitNum = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 20));
+
+    const q = { user: req.user._id };
+    if (status) q.status = status;
+
+    // cursor format: "<createdAtMs>_<objectId>"
+    if (cursor) {
+        const [createdAtMsRaw, idRaw] = String(cursor).split('_');
+        const createdAtMs = Number(createdAtMsRaw);
+        if (!Number.isNaN(createdAtMs) && mongoose.Types.ObjectId.isValid(idRaw)) {
+            const createdAt = new Date(createdAtMs);
+            q.$or = [
+                { createdAt: { $lt: createdAt } },
+                { createdAt, _id: { $lt: new mongoose.Types.ObjectId(idRaw) } }
+            ];
+        }
+    }
+
+    const orders = await Order.find(q)
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(limitNum)
+        .lean();
+
+    const last = orders[orders.length - 1];
+    const nextCursor = last ? `${new Date(last.createdAt).getTime()}_${last._id}` : null;
+
+    res.json({ data: { items: orders, nextCursor } });
 });
 
 // owner listing orders for own shop
@@ -115,8 +141,33 @@ export const listShopOrders = asyncHandler(async (req, res) => {
     const ShopModel = (await import('../models/shop.model.js')).Shop;
     const shops = await ShopModel.find({ owner: req.user._id }).lean();
     const shopIds = shops.map(s => s._id);
-    const orders = await Order.find({ shop: { $in: shopIds } }).sort({ createdAt: -1 }).lean();
-    res.json({ data: orders });
+    const { limit = '20', cursor, status } = req.query;
+    const limitNum = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 20));
+
+    const q = { shop: { $in: shopIds } };
+    if (status) q.status = status;
+
+    if (cursor) {
+        const [createdAtMsRaw, idRaw] = String(cursor).split('_');
+        const createdAtMs = Number(createdAtMsRaw);
+        if (!Number.isNaN(createdAtMs) && mongoose.Types.ObjectId.isValid(idRaw)) {
+            const createdAt = new Date(createdAtMs);
+            q.$or = [
+                { createdAt: { $lt: createdAt } },
+                { createdAt, _id: { $lt: new mongoose.Types.ObjectId(idRaw) } }
+            ];
+        }
+    }
+
+    const orders = await Order.find(q)
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(limitNum)
+        .lean();
+
+    const last = orders[orders.length - 1];
+    const nextCursor = last ? `${new Date(last.createdAt).getTime()}_${last._id}` : null;
+
+    res.json({ data: { items: orders, nextCursor } });
 });
 
 export const updateOrderStatus = asyncHandler(async (req, res) => {
@@ -149,4 +200,104 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     });
 
     res.json({ data: order });
+});
+
+/**
+ * GET /api/orders/shop/analytics
+ * Query params: sinceDays (default 7), topN (default 10)
+ *
+ * Uses aggregation ($facet, $unwind, $group, $lookup) to compute:
+ * - ordersByStatus
+ * - revenue & order counts (overall + today)
+ * - topProducts by revenue/qty
+ */
+export const shopAnalytics = asyncHandler(async (req, res) => {
+    const sinceDays = Math.min(365, Math.max(1, parseInt(String(req.query.sinceDays ?? '7'), 10) || 7));
+    const topN = Math.min(50, Math.max(1, parseInt(String(req.query.topN ?? '10'), 10) || 10));
+
+    const ShopModel = (await import('../models/shop.model.js')).Shop;
+    const shops = await ShopModel.find({ owner: req.user._id }).lean();
+    const shopIds = shops.map((s) => s._id);
+
+    const since = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [result] = await Order.aggregate([
+        { $match: { shop: { $in: shopIds }, createdAt: { $gte: since } } },
+        {
+            $facet: {
+                byStatus: [
+                    { $group: { _id: '$status', count: { $sum: 1 } } },
+                    { $sort: { count: -1 } }
+                ],
+                totals: [
+                    {
+                        $group: {
+                            _id: null,
+                            orders: { $sum: 1 },
+                            revenue: { $sum: '$total' }
+                        }
+                    }
+                ],
+                today: [
+                    { $match: { createdAt: { $gte: startOfToday } } },
+                    {
+                        $group: {
+                            _id: null,
+                            orders: { $sum: 1 },
+                            revenue: { $sum: '$total' }
+                        }
+                    }
+                ],
+                topProducts: [
+                    { $unwind: '$items' },
+                    {
+                        $group: {
+                            _id: '$items.product',
+                            qty: { $sum: '$items.quantity' },
+                            revenue: { $sum: { $multiply: ['$items.quantity', '$items.unitPrice'] } }
+                        }
+                    },
+                    { $sort: { revenue: -1 } },
+                    { $limit: topN },
+                    {
+                        $lookup: {
+                            from: 'products',
+                            localField: '_id',
+                            foreignField: '_id',
+                            as: 'product'
+                        }
+                    },
+                    { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+                    {
+                        $project: {
+                            _id: 1,
+                            qty: 1,
+                            revenue: 1,
+                            product: {
+                                _id: '$product._id',
+                                name: '$product.name',
+                                images: '$product.images',
+                                price: '$product.price'
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
+
+    const totals = (result?.totals && result.totals[0]) || { orders: 0, revenue: 0 };
+    const today = (result?.today && result.today[0]) || { orders: 0, revenue: 0 };
+
+    res.json({
+        data: {
+            window: { sinceDays, since },
+            ordersByStatus: result?.byStatus || [],
+            totals,
+            today,
+            topProducts: result?.topProducts || []
+        }
+    });
 });

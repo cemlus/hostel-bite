@@ -6,6 +6,7 @@ const router = Router();
 
 router.post('/', authRequired, productsCtrl.createProduct);
 router.get('/', authRequired, productsCtrl.listProducts);
+router.get('/ranked', authRequired, productsCtrl.rankedProducts);
 router.get('/:productId', authRequired, productsCtrl.getProduct);
 router.patch('/:productId', authRequired, productsCtrl.updateProduct);
 
