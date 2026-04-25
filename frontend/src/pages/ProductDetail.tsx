@@ -24,6 +24,10 @@ interface ProductDetail {
     _id: string;
     name: string;
   };
+  owner?: {
+    _id: string;
+    name: string;
+  };
 }
 
 export default function ProductDetail() {
@@ -177,8 +181,17 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {product.description && (
-            <p className="text-muted-foreground">{product.description}</p>
+          {(product.description || product.owner || product.shop) && (
+            <div className="space-y-1">
+              {product.description && (
+                <p className="text-muted-foreground">{product.description}</p>
+              )}
+              {(product.owner || product.shop) && (
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+                  Sold by {product.owner?.name || 'Owner'} at {product.shop?.name || 'Shop'}
+                </p>
+              )}
+            </div>
           )}
 
           {/* Price & Stock */}

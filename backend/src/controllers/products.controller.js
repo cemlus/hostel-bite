@@ -3,6 +3,7 @@ import { Product } from '../models/product.model.js';
 import { Shop } from '../models/shop.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import { Notification } from '../models/notification.model.js';
+import mongoose from 'mongoose';
 
 
 export const createProduct = asyncHandler(async (req, res) => {
@@ -105,7 +106,7 @@ export const listProducts = asyncHandler(async (req, res) => {
     }
 
     const [items, total] = await Promise.all([
-        cursor.skip(skipNum).limit(limitNum).lean(),
+        cursor.skip(skipNum).limit(limitNum).populate('shop', 'name').populate('owner', 'name').lean(),
         Product.countDocuments(countQuery)
     ]);
 
@@ -121,7 +122,7 @@ export const listProducts = asyncHandler(async (req, res) => {
 });
 
 export const getProduct = asyncHandler(async (req, res) => {
-    const product = await Product.findById(req.params.productId).lean();
+    const product = await Product.findById(req.params.productId).populate('shop', 'name').populate('owner', 'name').lean();
     if (!product) throw new ApiError(404, 'Product not found');
     res.json({ data: product });
 });
@@ -135,6 +136,17 @@ export const updateProduct = asyncHandler(async (req, res) => {
     Object.assign(product, req.body);
     await product.save();
     res.json({ data: product });
+});
+
+export const deleteProduct = asyncHandler(async (req, res) => {
+    const product = await Product.findById(req.params.productId);
+    if (!product) throw new ApiError(404, 'Product not found');
+    if (product.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        throw new ApiError(403, 'Not allowed');
+    }
+    product.isActive = false;
+    await product.save();
+    res.json({ message: 'Product deleted successfully' });
 });
 
 /**
@@ -156,8 +168,14 @@ export const rankedProducts = asyncHandler(async (req, res) => {
     } = req.query;
 
     const match = { isActive: true };
-    if (hostelId) match.hostel = hostelId;
-    if (shopId) match.shop = shopId;
+    if (hostelId) {
+        if (!mongoose.Types.ObjectId.isValid(hostelId)) throw new ApiError(400, 'Invalid hostelId');
+        match.hostel = new mongoose.Types.ObjectId(String(hostelId));
+    }
+    if (shopId) {
+        if (!mongoose.Types.ObjectId.isValid(shopId)) throw new ApiError(400, 'Invalid shopId');
+        match.shop = new mongoose.Types.ObjectId(String(shopId));
+    }
 
     if (minPrice || maxPrice) {
         match.price = {};
@@ -197,7 +215,7 @@ export const rankedProducts = asyncHandler(async (req, res) => {
         };
     })();
 
-    const items = await Product.aggregate([
+    let items = await Product.aggregate([
         { $match: match },
         { $lookup: votesLookup },
         { $addFields: { score: { $sum: '$votes.vote' } } },
@@ -205,6 +223,8 @@ export const rankedProducts = asyncHandler(async (req, res) => {
         { $limit: limitNum },
         { $project: { votes: 0 } }
     ]);
+
+    items = await Product.populate(items, [{ path: 'shop', select: 'name' }, { path: 'owner', select: 'name' }]);
 
     res.json({ data: { items } });
 });

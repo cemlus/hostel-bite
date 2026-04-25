@@ -17,6 +17,14 @@ interface Product {
   score?: number;
   images?: string[];
   tags?: string[];
+  shop?: {
+    _id: string;
+    name: string;
+  };
+  owner?: {
+    _id: string;
+    name: string;
+  };
 }
 
 // Mock data
@@ -38,14 +46,27 @@ export default function OwnerProducts() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<{ items: Product[] }>(`${ENDPOINTS.PRODUCTS.RANKED}?page=1&pageSize=100`);
+      // First get the owner's shop to filter products
+      const shopRes = await api.get<{ _id: string }>(ENDPOINTS.SHOPS.MINE);
+      const shopId = shopRes.data?._id;
+
+      if (!shopId) {
+        setProducts([]);
+        return;
+      }
+
+      const response = await api.get<{ items: Product[] }>(
+        `${ENDPOINTS.PRODUCTS.RANKED}?shopId=${shopId}&page=1&pageSize=100`
+      );
+      
       if (response.data?.items) {
         setProducts(response.data.items);
       } else {
-        setProducts(MOCK_PRODUCTS);
+        setProducts([]);
       }
-    } catch {
-      setProducts(MOCK_PRODUCTS);
+    } catch (err) {
+      console.error('Failed to fetch owner products:', err);
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }

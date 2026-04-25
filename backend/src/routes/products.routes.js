@@ -9,5 +9,6 @@ router.get('/', authRequired, productsCtrl.listProducts);
 router.get('/ranked', authRequired, productsCtrl.rankedProducts);
 router.get('/:productId', authRequired, productsCtrl.getProduct);
 router.patch('/:productId', authRequired, productsCtrl.updateProduct);
+router.delete('/:productId', authRequired, productsCtrl.deleteProduct);
 
 export default router;

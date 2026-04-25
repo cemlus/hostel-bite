@@ -19,6 +19,10 @@ export interface Product {
     _id: string;
     name: string;
   };
+  owner?: {
+    _id: string;
+    name: string;
+  };
 }
 
 interface ProductCardProps {
@@ -107,9 +111,6 @@ export function ProductCard({ product, onVote }: ProductCardProps) {
             <h3 className="font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
-            {product.shop && (
-              <p className="text-xs text-muted-foreground mt-0.5">{product.shop.name}</p>
-            )}
           </Link>
           
           {/* Vote Button */}
@@ -125,8 +126,17 @@ export function ProductCard({ product, onVote }: ProductCardProps) {
           )}
         </div>
 
-        {product.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.description}</p>
+        {(product.description || product.owner || product.shop) && (
+          <div className="mb-3">
+            {product.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+            )}
+            {(product.owner || product.shop) && (
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mt-1">
+                Sold by {product.owner?.name || 'Owner'} at {product.shop?.name || 'Shop'}
+              </p>
+            )}
+          </div>
         )}
 
         <div className="mt-auto flex items-center justify-between gap-2">
