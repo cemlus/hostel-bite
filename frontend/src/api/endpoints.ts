@@ -15,6 +15,7 @@ export const ENDPOINTS = {
     LIST: '/products',
     RANKED: '/products/ranked',
     CREATE: '/products',
+    GENERATE_DESC: '/products/generate-description',
     DETAIL: (id: string) => `/products/${id}`,
     VOTE: (id: string) => `/products/${id}/vote`,
   },

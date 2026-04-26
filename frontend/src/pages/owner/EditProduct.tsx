@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, X, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToastNotify } from '@/components/Toast';
 import { validatePrice, validateImageUrl } from '@/utils/validators';
@@ -22,7 +22,33 @@ export default function EditProduct() {
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleGenerateDescription = async () => {
+    if (!name.trim()) {
+      toast.error('Please enter a product name first');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await api.post<{ description: string }>(ENDPOINTS.PRODUCTS.GENERATE_DESC, {
+        name: name.trim(),
+      });
+
+      if (response.data?.description) {
+        setDescription(response.data.description);
+        toast.success('AI description generated!');
+      } else if (response.error) {
+        toast.error(response.error);
+      }
+    } catch {
+      toast.error('Failed to generate description');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -150,9 +176,24 @@ export default function EditProduct() {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1.5">
-              Description
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="description" className="block text-sm font-medium text-foreground">
+                Description
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateDescription}
+                disabled={isGenerating}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                Generate with AI
+              </button>
+            </div>
             <textarea
               id="description"
               value={description}

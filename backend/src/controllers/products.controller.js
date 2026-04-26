@@ -149,6 +149,44 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     res.json({ message: 'Product deleted successfully' });
 });
 
+export const generateDescription = asyncHandler(async (req, res) => {
+    const { name } = req.body;
+    if (!name) throw new ApiError(400, 'Product name is required for generation');
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new ApiError(500, 'OpenRouter API key is not configured');
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "HTTP-Referer": process.env.APP_URL || "http://localhost:5173",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "model": "google/gemini-2.0-flash-001",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": `Write a short, mouth-watering description for a snack called '${name}'. Make it sound appealing to college students. Keep it under 2 sentences.`
+                }
+            ]
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new ApiError(response.status, error?.error?.message || 'AI generation failed');
+    }
+
+    const data = await response.json();
+    const description = data.choices?.[0]?.message?.content?.trim();
+
+    if (!description) throw new ApiError(500, 'AI failed to generate a description');
+
+    res.json({ data: { description } });
+});
+
 /**
  * GET /api/products/ranked
  * Query params: hostelId, shopId, tags, minPrice, maxPrice, inStock, windowHours, limit
