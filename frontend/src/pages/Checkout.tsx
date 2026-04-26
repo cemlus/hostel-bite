@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Truck, MapPin, CreditCard, Banknote, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,24 @@ export default function Checkout() {
   const [room, setRoom] = useState(user?.room || '');
   const [isLoading, setIsLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [shopUpiId, setShopUpiId] = useState<string>('hostelbite@upi');
+
+  useEffect(() => {
+    if (items.length > 0 && items[0].shopId) {
+      fetchShopDetails(items[0].shopId);
+    }
+  }, [items]);
+
+  const fetchShopDetails = async (shopId: string) => {
+    try {
+      const response = await api.get<{ upiId?: string }>(ENDPOINTS.SHOPS.DETAIL(shopId));
+      if (response.data?.upiId) {
+        setShopUpiId(response.data.upiId);
+      }
+    } catch (err) {
+      console.error('Failed to fetch shop UPI ID:', err);
+    }
+  };
 
   const total = subtotal; // Free delivery
 
@@ -33,12 +51,10 @@ export default function Checkout() {
   }
 
   const handleUpiPayment = () => {
-    // Get first shop's VPA (in real app, this would come from shop settings)
-    const shopVpa = 'hostelbite@upi';
     const shopName = items[0]?.shopName || 'HostelBite';
     
     openUpiPayment({
-      vpa: shopVpa,
+      vpa: shopUpiId,
       name: shopName,
       amount: total,
       transactionNote: `HostelBite Order`,

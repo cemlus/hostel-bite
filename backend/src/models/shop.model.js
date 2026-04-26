@@ -4,6 +4,9 @@ const shopSchema = new mongoose.Schema({
   hostel: { type: mongoose.Schema.Types.ObjectId, ref: 'Hostel', required: true, index: true },
   name: { type: String, required: true },
   description: String,
+  phone: String,
+  upiId: String,
+  location: String,
   open: { type: Boolean, default: true },
   openTime: String,
   closeTime: String

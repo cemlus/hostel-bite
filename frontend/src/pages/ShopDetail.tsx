@@ -15,6 +15,8 @@ interface Shop {
   open: boolean;
   openTime?: string;
   closeTime?: string;
+  phone?: string;
+  location?: string;
   owner?: string;
 }
 
@@ -131,6 +133,18 @@ export default function ShopDetail() {
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4" />
                   <span>Hours: {shop.openTime} - {shop.closeTime}</span>
+                </div>
+              )}
+              {shop.phone && (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="h-4 w-4" />
+                  <span>{shop.phone}</span>
+                </div>
+              )}
+              {shop.location && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  <span>{shop.location}</span>
                 </div>
               )}
             </div>

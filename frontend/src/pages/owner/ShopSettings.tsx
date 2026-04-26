@@ -23,9 +23,12 @@ export default function ShopSettings() {
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [shopName, setShopName] = useState('');
+  const [description, setDescription] = useState('');
   const [phone, setPhone] = useState('');
   const [upiId, setUpiId] = useState('');
   const [location, setLocation] = useState('');
+  const [openTime, setOpenTime] = useState('');
+  const [closeTime, setCloseTime] = useState('');
   const [isOpen, setIsOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,9 +44,12 @@ export default function ShopSettings() {
         const s = response.data;
         setShop(s);
         setShopName(s.name);
+        setDescription(s.description || '');
         setPhone(s.phone || '');
         setUpiId(s.upiId || '');
         setLocation(s.location || '');
+        setOpenTime(s.openTime || '');
+        setCloseTime(s.closeTime || '');
         setIsOpen(s.open);
       }
     } catch (err) {
@@ -61,9 +67,12 @@ export default function ShopSettings() {
     try {
       const response = await api.patch(ENDPOINTS.SHOPS.DETAIL(shop._id), {
         name: shopName,
+        description,
         phone,
         upiId,
         location,
+        openTime,
+        closeTime,
         open: isOpen,
       });
 
@@ -113,40 +122,54 @@ export default function ShopSettings() {
               value={shopName}
               onChange={(e) => setShopName(e.target.value)}
               className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              required
             />
           </div>
 
-          {/* Phone */}
+          {/* Description */}
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5">
-              <Phone className="inline h-4 w-4 mr-1" />
-              Contact Phone
+            <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1.5">
+              Description
             </label>
-            <input
-              type="tel"
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell customers about your shop..."
+              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring min-h-[100px]"
             />
           </div>
 
-          {/* UPI ID */}
-          <div>
-            <label htmlFor="upiId" className="block text-sm font-medium text-foreground mb-1.5">
-              UPI ID (for payments)
-            </label>
-            <input
-              type="text"
-              id="upiId"
-              value={upiId}
-              onChange={(e) => setUpiId(e.target.value)}
-              placeholder="yourname@upi"
-              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Customers will pay to this UPI ID
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Phone */}
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5">
+                <Phone className="inline h-4 w-4 mr-1" />
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            {/* UPI ID */}
+            <div>
+              <label htmlFor="upiId" className="block text-sm font-medium text-foreground mb-1.5">
+                UPI ID (for payments)
+              </label>
+              <input
+                type="text"
+                id="upiId"
+                value={upiId}
+                onChange={(e) => setUpiId(e.target.value)}
+                placeholder="yourname@upi"
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
 
           {/* Location */}
@@ -163,6 +186,38 @@ export default function ShopSettings() {
               placeholder="e.g., Near Main Gate"
               className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Open Time */}
+            <div>
+              <label htmlFor="openTime" className="block text-sm font-medium text-foreground mb-1.5">
+                Open Time
+              </label>
+              <input
+                type="text"
+                id="openTime"
+                value={openTime}
+                onChange={(e) => setOpenTime(e.target.value)}
+                placeholder="e.g., 9:00 AM"
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            {/* Close Time */}
+            <div>
+              <label htmlFor="closeTime" className="block text-sm font-medium text-foreground mb-1.5">
+                Close Time
+              </label>
+              <input
+                type="text"
+                id="closeTime"
+                value={closeTime}
+                onChange={(e) => setCloseTime(e.target.value)}
+                placeholder="e.g., 10:00 PM"
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
 
           {/* Shop Status */}
