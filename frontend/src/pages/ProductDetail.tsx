@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, ShoppingCart, ThumbsUp, Store } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingCart, ThumbsUp, Store, Activity, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { useCart } from '@/contexts/CartContext';
@@ -39,6 +39,9 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showNutrition, setShowNutrition] = useState(false);
+  const [nutritionData, setNutritionData] = useState<string | null>(null);
+  const [isFetchingNutrition, setIsFetchingNutrition] = useState(false);
 
   const productId = product?._id || product?.id || '';
   const quantity = getItemQuantity(productId);
@@ -49,6 +52,28 @@ export default function ProductDetail() {
       fetchProduct();
     }
   }, [id]);
+
+  const handleToggleNutrition = async () => {
+    if (!showNutrition && !nutritionData && product) {
+      setIsFetchingNutrition(true);
+      try {
+        const response = await api.post<{ nutrition: string }>(ENDPOINTS.PRODUCTS.GENERATE_NUTRITION, {
+          name: product.name,
+          description: product.description,
+        });
+        if (response.data?.nutrition) {
+          setNutritionData(response.data.nutrition);
+        } else if (response.error) {
+          toast.error(response.error);
+        }
+      } catch {
+        toast.error('Failed to fetch nutrition facts');
+      } finally {
+        setIsFetchingNutrition(false);
+      }
+    }
+    setShowNutrition(!showNutrition);
+  };
 
   const fetchProduct = async () => {
     setIsLoading(true);
@@ -203,6 +228,39 @@ export default function ProductDetail() {
             )}>
               {isOutOfStock ? 'Out of stock' : `${product.stock} in stock`}
             </span>
+          </div>
+
+          {/* Nutrition Facts Toggle */}
+          <div className="space-y-3">
+            <button
+              onClick={handleToggleNutrition}
+              disabled={isFetchingNutrition}
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              {isFetchingNutrition ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Activity className="h-4 w-4" />
+              )}
+              {showNutrition ? 'Hide Nutrition' : 'Show Nutrition Quick-Facts'}
+            </button>
+
+            {showNutrition && nutritionData && (
+              <div className="rounded-xl bg-success/5 border border-success/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-success" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-success/80">
+                    AI Estimated Nutrition
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-foreground leading-relaxed">
+                  {nutritionData}
+                </p>
+                <p className="mt-2 text-[10px] text-muted-foreground italic">
+                  *Estimates based on standard canteen servings. Not a substitute for medical advice.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Vote */}
