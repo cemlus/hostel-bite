@@ -148,7 +148,22 @@ export default function Products() {
     }
   };
 
-  const filteredProducts = products;
+  const filteredProducts = useMemo(() => {
+    if (products.length === 0) return [];
+    
+    // If we're using mock data (products === MOCK_PRODUCTS), we need to filter manually
+    // If using API data, it's already filtered by the server
+    const isMock = products === MOCK_PRODUCTS;
+    
+    if (!isMock) return products;
+
+    return products.filter((p) => {
+      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
+                           p.description?.toLowerCase().includes(search.toLowerCase());
+      const matchesTag = selectedTag === 'All' || p.tags?.includes(selectedTag);
+      return matchesSearch && matchesTag;
+    });
+  }, [products, search, selectedTag]);
 
   return (
     <div className="container-wide py-8">

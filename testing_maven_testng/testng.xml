@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="HostelBite E2E Test Suite">
+    <test name="E2E Tests">
+        <classes>
+            <class name="com.hostelbite.e2e.AuthE2ETest"/>
+            <class name="com.hostelbite.e2e.AddToCartE2ETest"/>
+            <class name="com.hostelbite.e2e.CheckoutE2ETest"/>
+            <class name="com.hostelbite.e2e.SearchAndFilterE2ETest"/>
+            <class name="com.hostelbite.e2e.FullCustomerJourneyE2ETest"/>
+            <class name="com.hostelbite.e2e.OwnerJourneyE2ETest"/>
+            <class name="com.hostelbite.e2e.CombinedOwnerCustomerJourneyE2ETest"/>
+        </classes>
+    </test>
+</suite>

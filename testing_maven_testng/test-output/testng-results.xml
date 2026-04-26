@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="16" passed="16" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-04-26T21:32:28 IST" name="Default suite" finished-at="2026-04-26T21:33:06 IST" duration-ms="38205">
+    <groups>
+    </groups>
+    <test started-at="2026-04-26T21:32:28 IST" name="Default test" finished-at="2026-04-26T21:33:06 IST" duration-ms="38205">
+      <class name="com.hostelbite.e2e.CombinedJourneyE2ETest">
+        <test-method is-config="true" signature="setup()[pri:0, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:28 IST" name="setup" finished-at="2026-04-26T21:32:33 IST" duration-ms="4969" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method signature="testOwnerRegistration()[pri:1, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:33 IST" name="testOwnerRegistration" finished-at="2026-04-26T21:32:37 IST" duration-ms="4007" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testOwnerRegistration -->
+        <test-method signature="testOwnerLogout()[pri:2, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:37 IST" name="testOwnerLogout" finished-at="2026-04-26T21:32:37 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.testOwnerRegistration" duration-ms="213" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testOwnerLogout -->
+        <test-method signature="testOwnerLogin()[pri:3, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:37 IST" name="testOwnerLogin" finished-at="2026-04-26T21:32:39 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.testOwnerLogout" duration-ms="2164" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testOwnerLogin -->
+        <test-method signature="testUpdateShopSettings()[pri:4, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:39 IST" name="testUpdateShopSettings" finished-at="2026-04-26T21:32:41 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.testOwnerLogin" duration-ms="1706" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testUpdateShopSettings -->
+        <test-method signature="testCreateProducts()[pri:5, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:41 IST" name="testCreateProducts" finished-at="2026-04-26T21:32:50 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.testUpdateShopSettings" duration-ms="8846" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testCreateProducts -->
+        <test-method signature="step01_register()[pri:6, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:50 IST" name="step01_register" finished-at="2026-04-26T21:32:53 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.testCreateProducts" duration-ms="3162" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step01_register -->
+        <test-method signature="step02_logout()[pri:7, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:53 IST" name="step02_logout" finished-at="2026-04-26T21:32:53 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step01_register" duration-ms="301" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step02_logout -->
+        <test-method signature="step03_loginWithSameCredentials()[pri:8, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:53 IST" name="step03_loginWithSameCredentials" finished-at="2026-04-26T21:32:55 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step02_logout" duration-ms="2087" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step03_loginWithSameCredentials -->
+        <test-method signature="step04_searchAndAddOreo()[pri:9, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:55 IST" name="step04_searchAndAddOreo" finished-at="2026-04-26T21:32:56 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step03_loginWithSameCredentials" duration-ms="861" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step04_searchAndAddOreo -->
+        <test-method signature="step05_searchAndAddKitKat()[pri:10, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:56 IST" name="step05_searchAndAddKitKat" finished-at="2026-04-26T21:32:58 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step04_searchAndAddOreo" duration-ms="1717" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step05_searchAndAddKitKat -->
+        <test-method signature="step06_filterChipsAndAddRandomItem()[pri:11, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:32:58 IST" name="step06_filterChipsAndAddRandomItem" finished-at="2026-04-26T21:33:02 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step05_searchAndAddKitKat" duration-ms="3880" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step06_filterChipsAndAddRandomItem -->
+        <test-method signature="step07_verifyCartHasAllItems()[pri:12, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:33:02 IST" name="step07_verifyCartHasAllItems" finished-at="2026-04-26T21:33:03 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step06_filterChipsAndAddRandomItem" duration-ms="901" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step07_verifyCartHasAllItems -->
+        <test-method signature="step08_proceedToCheckout()[pri:13, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:33:03 IST" name="step08_proceedToCheckout" finished-at="2026-04-26T21:33:03 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step07_verifyCartHasAllItems" duration-ms="366" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step08_proceedToCheckout -->
+        <test-method signature="step09_selectCashOnDelivery()[pri:14, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:33:03 IST" name="step09_selectCashOnDelivery" finished-at="2026-04-26T21:33:03 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step08_proceedToCheckout" duration-ms="211" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step09_selectCashOnDelivery -->
+        <test-method signature="step10_placeOrder()[pri:15, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:33:03 IST" name="step10_placeOrder" finished-at="2026-04-26T21:33:04 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step09_selectCashOnDelivery" duration-ms="880" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step10_placeOrder -->
+        <test-method signature="step11_verifyOrderInMyOrders()[pri:16, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:33:04 IST" name="step11_verifyOrderInMyOrders" finished-at="2026-04-26T21:33:05 IST" depends-on-methods="com.hostelbite.e2e.CombinedJourneyE2ETest.step10_placeOrder" duration-ms="368" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- step11_verifyOrderInMyOrders -->
+        <test-method is-config="true" signature="teardown()[pri:0, instance:com.hostelbite.e2e.CombinedJourneyE2ETest@42a48628]" started-at="2026-04-26T21:33:05 IST" name="teardown" finished-at="2026-04-26T21:33:06 IST" duration-ms="1329" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- teardown -->
+      </class> <!-- com.hostelbite.e2e.CombinedJourneyE2ETest -->
+    </test> <!-- Default test -->
+  </suite> <!-- Default suite -->
+</testng-results>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
+  <test thread-count="5" name="Default test(failed)">
+    <classes>
+      <class name="com.hostelbite.e2e.CombinedJourneyE2ETest">
+        <methods>
+          <include name="testCreateProducts"/>
+          <include name="step04_searchAndAddOreo"/>
+          <include name="step02_logout"/>
+          <include name="testOwnerLogin"/>
+          <include name="step05_searchAndAddKitKat"/>
+          <include name="step10_placeOrder"/>
+          <include name="step07_verifyCartHasAllItems"/>
+          <include name="step01_register"/>
+          <include name="step09_selectCashOnDelivery"/>
+          <include name="step03_loginWithSameCredentials"/>
+          <include name="step08_proceedToCheckout"/>
+          <include name="step06_filterChipsAndAddRandomItem"/>
+          <include name="step11_verifyOrderInMyOrders"/>
+          <include name="testUpdateShopSettings"/>
+          <include name="setup"/>
+          <include name="testOwnerLogout"/>
+          <include name="teardown"/>
+          <include name="testOwnerRegistration"/>
+        </methods>
+      </class> <!-- com.hostelbite.e2e.CombinedJourneyE2ETest -->
+    </classes>
+  </test> <!-- Default test(failed) -->
+</suite> <!-- Failed suite [Default suite] -->

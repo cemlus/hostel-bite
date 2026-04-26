@@ -1,228 +1,277 @@
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { Product } from '../models/product.model.js';
-import { Shop } from '../models/shop.model.js';
-import { ApiError } from '../utils/ApiError.js';
-import { Notification } from '../models/notification.model.js';
-import mongoose from 'mongoose';
-
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { Product } from "../models/product.model.js";
+import { Shop } from "../models/shop.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { Notification } from "../models/notification.model.js";
+import mongoose from "mongoose";
 
 export const createProduct = asyncHandler(async (req, res) => {
-    const { name, description, price, stock = 0, tags = [], images = [] } = req.body;
-    const ownerId = req.user._id;
-    const hostelId = req.user.hostel;
+  const {
+    name,
+    description,
+    price,
+    stock = 0,
+    tags = [],
+    images = [],
+  } = req.body;
+  const ownerId = req.user._id;
+  const hostelId = req.user.hostel;
 
-    if (!name || price === undefined) throw new ApiError(400, 'name and price required');
-    if (!hostelId) throw new ApiError(400, 'User must be associated with a hostel to create products');
+  if (!name || price === undefined)
+    throw new ApiError(400, "name and price required");
+  if (!hostelId)
+    throw new ApiError(
+      400,
+      "User must be associated with a hostel to create products",
+    );
 
-    let shop = await Shop.findOne({ owner: ownerId });
-    if (!shop) {
-        const defaultName = `${req.user.name}'s Shop`;
-        shop = await Shop.create({ owner: ownerId, hostel: hostelId, name: defaultName, open: true });
-        // optional: notify owner that shop was auto-created
-        await Notification.create({
-            user: ownerId,
-            title: 'Shop created',
-            body: `A shop "${defaultName}" was created for you automatically. Edit details from your dashboard.`,
-            payload: { shopId: shop._id }
-        });
-    }
-
-    const product = await Product.create({
-        shop: shop._id,
-        owner: ownerId,
-        hostel: hostelId,
-        name,
-        description,
-        price,
-        stock,
-        tags,
-        images
+  let shop = await Shop.findOne({ owner: ownerId });
+  if (!shop) {
+    const defaultName = `${req.user.name}'s Shop`;
+    shop = await Shop.create({
+      owner: ownerId,
+      hostel: hostelId,
+      name: defaultName,
+      open: true,
     });
+    // optional: notify owner that shop was auto-created
+    await Notification.create({
+      user: ownerId,
+      title: "Shop created",
+      body: `A shop "${defaultName}" was created for you automatically. Edit details from your dashboard.`,
+      payload: { shopId: shop._id },
+    });
+  }
 
-    res.status(201).json({ data: { product, shop } });
+  const product = await Product.create({
+    shop: shop._id,
+    owner: ownerId,
+    hostel: hostelId,
+    name,
+    description,
+    price,
+    stock,
+    tags,
+    images,
+  });
+
+  res.status(201).json({ data: { product, shop } });
 });
 
 export const listProducts = asyncHandler(async (req, res) => {
-    const {
-        hostelId,
-        shopId,
-        search,
-        tags,
-        minPrice,
-        maxPrice,
-        inStock,
-        sort = 'new',
-        page = '1',
-        pageSize = '24'
-    } = req.query;
+  const {
+    hostelId,
+    shopId,
+    search,
+    tags,
+    minPrice,
+    maxPrice,
+    inStock,
+    sort = "new",
+    page = "1",
+    pageSize = "24",
+  } = req.query;
 
-    const q = { isActive: true };
-    if (hostelId) q.hostel = hostelId;
-    if (shopId) q.shop = shopId;
+  const q = { isActive: true };
+  if (hostelId) q.hostel = hostelId;
+  if (shopId) q.shop = shopId;
 
-    // Comparisons
-    if (minPrice || maxPrice) {
-        q.price = {};
-        if (minPrice !== undefined) q.price.$gte = Number(minPrice);                                // $gte
-        if (maxPrice !== undefined) q.price.$lte = Number(maxPrice);                                // $lte
+  // Comparisons
+  if (minPrice || maxPrice) {
+    q.price = {};
+    if (minPrice !== undefined) q.price.$gte = Number(minPrice); // $gte
+    if (maxPrice !== undefined) q.price.$lte = Number(maxPrice); // $lte
+  }
+
+  if (inStock === "true") {
+    q.stock = { $gt: 0 }; // $gt
+  }
+
+  // Array operators
+  if (tags) {
+    const list = String(tags)
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (list.length > 0) q.tags = { $in: list };
+  }
+
+  const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+  const limitNum = Math.min(
+    100,
+    Math.max(1, parseInt(String(pageSize), 10) || 24),
+  );
+  const skipNum = (pageNum - 1) * limitNum;
+
+  // Sorting
+  // - new: createdAt desc
+  // - price_asc / price_desc
+  // - search uses $text score ordering
+  let cursor = Product.find(q);
+  let countQuery = q;
+
+  if (search) {
+    // Prefer $text search (uses text index); fallback to regex if user passed an empty/invalid string.
+    const term = String(search).trim();
+    if (term) {
+      countQuery = { ...q, $text: { $search: term } };
+      cursor = Product.find(countQuery, { score: { $meta: "textScore" } }).sort(
+        { score: { $meta: "textScore" }, createdAt: -1 },
+      );
     }
+  } else {
+    if (sort === "price_asc") cursor = cursor.sort({ price: 1, createdAt: -1 });
+    else if (sort === "price_desc")
+      cursor = cursor.sort({ price: -1, createdAt: -1 });
+    else cursor = cursor.sort({ createdAt: -1 });
+  }
 
-    if (inStock === 'true') {                                                                       
-        q.stock = { $gt: 0 };                                                                       // $gt
-    }
+  const [items, total] = await Promise.all([
+    cursor
+      .skip(skipNum)
+      .limit(limitNum)
+      .populate("shop", "name")
+      .populate("owner", "name")
+      .lean(),
+    Product.countDocuments(countQuery),
+  ]);
 
-    // Array operators
-    if (tags) {
-        const list = String(tags)
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean);
-        if (list.length > 0) q.tags = { $in: list };
-    }
-
-    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(String(pageSize), 10) || 24));
-    const skipNum = (pageNum - 1) * limitNum;
-
-    // Sorting
-    // - new: createdAt desc
-    // - price_asc / price_desc
-    // - search uses $text score ordering
-    let cursor = Product.find(q);
-    let countQuery = q;
-
-    if (search) {
-        // Prefer $text search (uses text index); fallback to regex if user passed an empty/invalid string.
-        const term = String(search).trim();
-        if (term) {
-            countQuery = { ...q, $text: { $search: term } };
-            cursor = Product.find(countQuery, { score: { $meta: 'textScore' } })
-                .sort({ score: { $meta: 'textScore' }, createdAt: -1 });
-        }
-    } else {
-        if (sort === 'price_asc') cursor = cursor.sort({ price: 1, createdAt: -1 });
-        else if (sort === 'price_desc') cursor = cursor.sort({ price: -1, createdAt: -1 });
-        else cursor = cursor.sort({ createdAt: -1 });
-    }
-
-    const [items, total] = await Promise.all([
-        cursor.skip(skipNum).limit(limitNum).populate('shop', 'name').populate('owner', 'name').lean(),
-        Product.countDocuments(countQuery)
-    ]);
-
-    res.json({
-        data: {
-            items,
-            page: pageNum,
-            pageSize: limitNum,
-            total,
-            totalPages: Math.ceil(total / limitNum)
-        }
-    });
+  res.json({
+    data: {
+      items,
+      page: pageNum,
+      pageSize: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+    },
+  });
 });
 
 export const getProduct = asyncHandler(async (req, res) => {
-    const product = await Product.findById(req.params.productId).populate('shop', 'name').populate('owner', 'name').lean();
-    if (!product) throw new ApiError(404, 'Product not found');
-    res.json({ data: product });
+  const product = await Product.findById(req.params.productId)
+    .populate("shop", "name")
+    .populate("owner", "name")
+    .lean();
+  if (!product) throw new ApiError(404, "Product not found");
+  res.json({ data: product });
 });
 
 export const updateProduct = asyncHandler(async (req, res) => {
-    const product = await Product.findById(req.params.productId);
-    if (!product) throw new ApiError(404, 'Product not found');
-    if (product.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-        throw new ApiError(403, 'Not allowed');
-    }
-    Object.assign(product, req.body);
-    await product.save();
-    res.json({ data: product });
+  const product = await Product.findById(req.params.productId);
+  if (!product) throw new ApiError(404, "Product not found");
+  if (
+    product.owner.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
+    throw new ApiError(403, "Not allowed");
+  }
+  Object.assign(product, req.body);
+  await product.save();
+  res.json({ data: product });
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {
-    const product = await Product.findById(req.params.productId);
-    if (!product) throw new ApiError(404, 'Product not found');
-    if (product.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-        throw new ApiError(403, 'Not allowed');
-    }
-    product.isActive = false;
-    await product.save();
-    res.json({ message: 'Product deleted successfully' });
+  const product = await Product.findById(req.params.productId);
+  if (!product) throw new ApiError(404, "Product not found");
+  if (
+    product.owner.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
+    throw new ApiError(403, "Not allowed");
+  }
+  product.isActive = false;
+  await product.save();
+  res.json({ message: "Product deleted successfully" });
 });
 
 export const generateDescription = asyncHandler(async (req, res) => {
-    const { name } = req.body;
-    if (!name) throw new ApiError(400, 'Product name is required for generation');
+  const { name } = req.body;
+  if (!name) throw new ApiError(400, "Product name is required for generation");
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) throw new ApiError(500, 'OpenRouter API key is not configured');
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new ApiError(500, "OpenRouter API key is not configured");
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "HTTP-Referer": process.env.APP_URL || "http://localhost:5173",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            "model": "google/gemini-2.0-flash-001",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": `Write a short, mouth-watering description for a snack called '${name}'. Make it sound appealing to college students. Keep it under 2 sentences.`
-                }
-            ]
-        })
-    });
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": process.env.APP_URL || "http://localhost:5173",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "inclusionai/ling-2.6-flash:free",
+        messages: [
+          {
+            role: "user",
+            content: `Write a short, mouth-watering description for a snack called '${name}'. Make it sound appealing to college students. Keep it under 2 sentences.`,
+          },
+        ],
+      }),
+    },
+  );
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new ApiError(response.status, error?.error?.message || 'AI generation failed');
-    }
+  if (!response.ok) {
+    const error = await response.json();
+    throw new ApiError(
+      response.status,
+      error?.error?.message || "AI generation failed",
+    );
+  }
 
-    const data = await response.json();
-    const description = data.choices?.[0]?.message?.content?.trim();
+  const data = await response.json();
+  const description = data.choices?.[0]?.message?.content?.trim();
 
-    if (!description) throw new ApiError(500, 'AI failed to generate a description');
+  if (!description)
+    throw new ApiError(500, "AI failed to generate a description");
 
-    res.json({ data: { description } });
+  res.json({ data: { description } });
 });
 
 export const generateNutrition = asyncHandler(async (req, res) => {
-    const { name, description } = req.body;
-    if (!name) throw new ApiError(400, 'Product name is required for estimation');
+  const { name, description } = req.body;
+  if (!name) throw new ApiError(400, "Product name is required for estimation");
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) throw new ApiError(500, 'OpenRouter API key is not configured');
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new ApiError(500, "OpenRouter API key is not configured");
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "HTTP-Referer": process.env.APP_URL || "http://localhost:5173",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            "model": "google/gemini-2.0-flash-001",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": `Estimate the nutritional value of a standard Indian hostel canteen serving of '${name}' (${description || 'No description'}). Format strictly as: Calories: X, Protein: Yg, Carbs: Zg. Provide no other text.`
-                }
-            ]
-        })
-    });
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": process.env.APP_URL || "http://localhost:5173",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "inclusionai/ling-2.6-flash:free",
+        messages: [
+          {
+            role: "user",
+            content: `Estimate the nutritional value of a standard Indian hostel canteen serving of '${name}' (${description || "No description"}). Format strictly as: Calories: X, Protein: Yg, Carbs: Zg. Provide no other text.`,
+          },
+        ],
+      }),
+    },
+  );
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new ApiError(response.status, error?.error?.message || 'AI generation failed');
-    }
+  if (!response.ok) {
+    const error = await response.json();
+    throw new ApiError(
+      response.status,
+      error?.error?.message || "AI generation failed",
+    );
+  }
 
-    const data = await response.json();
-    const nutrition = data.choices?.[0]?.message?.content?.trim();
+  const data = await response.json();
+  const nutrition = data.choices?.[0]?.message?.content?.trim();
 
-    if (!nutrition) throw new ApiError(500, 'AI failed to generate nutritional facts');
+  if (!nutrition)
+    throw new ApiError(500, "AI failed to generate nutritional facts");
 
-    res.json({ data: { nutrition } });
+  res.json({ data: { nutrition } });
 });
 
 /**
@@ -232,75 +281,89 @@ export const generateNutrition = asyncHandler(async (req, res) => {
  * Computes vote score from Vote collection and returns products sorted by score.
  */
 export const rankedProducts = asyncHandler(async (req, res) => {
-    const {
-        hostelId,
-        shopId,
-        tags,
-        minPrice,
-        maxPrice,
-        inStock,
-        windowHours,
-        limit = '50'
-    } = req.query;
+  const {
+    hostelId,
+    shopId,
+    search,
+    tags,
+    minPrice,
+    maxPrice,
+    inStock,
+    windowHours,
+    limit = "50",
+  } = req.query;
 
-    const match = { isActive: true };
-    if (hostelId) {
-        if (!mongoose.Types.ObjectId.isValid(hostelId)) throw new ApiError(400, 'Invalid hostelId');
-        match.hostel = new mongoose.Types.ObjectId(String(hostelId));
+  const match = { isActive: true };
+  
+  if (search && String(search).trim()) {
+    match.$text = { $search: String(search).trim() };
+  }
+
+  if (hostelId) {
+    if (!mongoose.Types.ObjectId.isValid(hostelId))
+      throw new ApiError(400, "Invalid hostelId");
+    match.hostel = new mongoose.Types.ObjectId(String(hostelId));
+  }
+  if (shopId) {
+    if (!mongoose.Types.ObjectId.isValid(shopId))
+      throw new ApiError(400, "Invalid shopId");
+    match.shop = new mongoose.Types.ObjectId(String(shopId));
+  }
+
+  if (minPrice || maxPrice) {
+    match.price = {};
+    if (minPrice !== undefined) match.price.$gte = Number(minPrice);
+    if (maxPrice !== undefined) match.price.$lte = Number(maxPrice);
+  }
+  if (inStock === "true") match.stock = { $gt: 0 };
+  if (tags) {
+    const list = String(tags)
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (list.length > 0) match.tags = { $in: list };
+  }
+
+  const limitNum = Math.min(
+    100,
+    Math.max(1, parseInt(String(limit), 10) || 50),
+  );
+
+  const votesLookup = (() => {
+    const hours = windowHours !== undefined ? Number(windowHours) : null;
+    if (!hours || Number.isNaN(hours) || hours <= 0) {
+      return {
+        from: "votes",
+        localField: "_id",
+        foreignField: "product",
+        as: "votes",
+      };
     }
-    if (shopId) {
-        if (!mongoose.Types.ObjectId.isValid(shopId)) throw new ApiError(400, 'Invalid shopId');
-        match.shop = new mongoose.Types.ObjectId(String(shopId));
-    }
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+    return {
+      from: "votes",
+      let: { productId: "$_id" },
+      pipeline: [
+        { $match: { $expr: { $eq: ["$product", "$$productId"] } } },
+        { $match: { createdAt: { $gte: since } } },
+      ],
+      as: "votes",
+    };
+  })();
 
-    if (minPrice || maxPrice) {
-        match.price = {};
-        if (minPrice !== undefined) match.price.$gte = Number(minPrice);
-        if (maxPrice !== undefined) match.price.$lte = Number(maxPrice);
-    }
-    if (inStock === 'true') match.stock = { $gt: 0 };
-    if (tags) {
-        const list = String(tags)
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean);
-        if (list.length > 0) match.tags = { $in: list };
-    }
+  let items = await Product.aggregate([
+    { $match: match },
+    { $lookup: votesLookup },
+    { $addFields: { score: { $sum: "$votes.vote" } } },
+    { $sort: { score: -1, createdAt: -1 } },
+    { $limit: limitNum },
+    { $project: { votes: 0 } },
+  ]);
 
-    const limitNum = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 50));
+  items = await Product.populate(items, [
+    { path: "shop", select: "name" },
+    { path: "owner", select: "name" },
+  ]);
 
-    const votesLookup = (() => {
-        const hours = windowHours !== undefined ? Number(windowHours) : null;
-        if (!hours || Number.isNaN(hours) || hours <= 0) {
-            return {
-                from: 'votes',
-                localField: '_id',
-                foreignField: 'product',
-                as: 'votes'
-            };
-        }
-        const since = new Date(Date.now() - hours * 60 * 60 * 1000);
-        return {
-            from: 'votes',
-            let: { productId: '$_id' },
-            pipeline: [
-                { $match: { $expr: { $eq: ['$product', '$$productId'] } } },
-                { $match: { createdAt: { $gte: since } } }
-            ],
-            as: 'votes'
-        };
-    })();
-
-    let items = await Product.aggregate([
-        { $match: match },
-        { $lookup: votesLookup },
-        { $addFields: { score: { $sum: '$votes.vote' } } },
-        { $sort: { score: -1, createdAt: -1 } },
-        { $limit: limitNum },
-        { $project: { votes: 0 } }
-    ]);
-
-    items = await Product.populate(items, [{ path: 'shop', select: 'name' }, { path: 'owner', select: 'name' }]);
-
-    res.json({ data: { items } });
+  res.json({ data: { items } });
 });
