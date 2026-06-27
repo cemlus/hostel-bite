@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: hostelbite-backend
+    env: node
+    rootDir: backend # This tells Render the backend is in the 'backend' folder
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      # The following variables have 'sync: false' because they are secrets. 
+      # You will need to manually enter them in the Render Dashboard after deploying.
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OPENROUTER_API_KEY # Assuming you need this for the AI features mentioned in the architecture
+        sync: false
