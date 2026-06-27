@@ -14,15 +14,15 @@ export const vote = asyncHandler(async (req, res) => {
 
     // upsert
     const doc = await Vote.findOneAndUpdate(
-        { user: req.user._id, product: productId },
+        { user: req.user._id, product: productId },         // find the vote document for this exact user and this exact product
         { vote },
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // optionally return aggregated score (quick implementation)
+    // optionally return aggregated score
     const agg = await Vote.aggregate([
-        { $match: { product: doc.product } },
-        { $group: { _id: '$product', score: { $sum: '$vote' } } }
+        { $match: { product: doc.product } },           
+        { $group: { _id: '$product', score: { $sum: '$vote' } } }           
     ]);
 
     const score = (agg[0] && agg[0].score) || 0;

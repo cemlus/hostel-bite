@@ -12,12 +12,11 @@ export const placeOrder = asyncHandler(async (req, res) => {
     }
     if (!['delivery', 'pickup'].includes(deliveryMode)) throw new ApiError(400, 'Invalid deliveryMode');
 
-    // load products, check shops consistent
     const productIds = items.map((it) => it.productId);
+    // used $in to fetch all ordered products in a single query instead of making multiple database calls
     const products = await Product.find({ _id: { $in: productIds } }).lean();
     if (products.length !== items.length) throw new ApiError(400, 'Some products not found');
 
-    // Ensure all products belong to same shop (MVP assumption). If not, reject.
     const shopIds = [...new Set(products.map((p) => p.shop.toString()))];
     if (shopIds.length !== 1) throw new ApiError(400, 'All items must be from the same shop');
 
@@ -46,6 +45,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
     const decremented = [];
     try {
         for (const d of toDecrement) {
+            // used a conditional atomic update with findOneAndUpdate and $inc so stock cannot go negative during concurrent orders
             const updated = await Product.findOneAndUpdate(
                 { _id: d.productId, stock: { $gte: d.qty } },
                 { $inc: { stock: -d.qty } },
@@ -70,7 +70,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
         });
 
         // create notifications
-        // notify shop owner
+        // notify the buyer
         await Notification.create({
             user: req.user._id,
             title: 'Order placed',
@@ -83,9 +83,11 @@ export const placeOrder = asyncHandler(async (req, res) => {
     } catch (err) {
         // rollback previously decremented stocks
         for (const d of decremented) {
-            await Product.findByIdAndUpdate(d.productId, { $inc: { stock: d.qty } });
+            await Product.findByIdAndUpdate(d.productId, {
+                $inc: { stock: d.qty }
+            });
         }
-        throw err; // handled by error middleware
+        throw err;
     }
 });
 
@@ -202,15 +204,6 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     res.json({ data: order });
 });
 
-/**
- * GET /api/orders/shop/analytics
- * Query params: sinceDays (default 7), topN (default 10)
- *
- * Uses aggregation ($facet, $unwind, $group, $lookup) to compute:
- * - ordersByStatus
- * - revenue & order counts (overall + today)
- * - topProducts by revenue/qty
- */
 export const shopAnalytics = asyncHandler(async (req, res) => {
     const sinceDays = Math.min(365, Math.max(1, parseInt(String(req.query.sinceDays ?? '7'), 10) || 7));
     const topN = Math.min(50, Math.max(1, parseInt(String(req.query.topN ?? '10'), 10) || 10));
@@ -226,12 +219,17 @@ export const shopAnalytics = asyncHandler(async (req, res) => {
     const [result] = await Order.aggregate([
         { $match: { shop: { $in: shopIds }, createdAt: { $gte: since } } },
         {
+            // used $facet to compute multiple analytics outputs in a single aggregation query, which reduces database round-trips and improves performance
             $facet: {
                 byStatus: [
                     { $group: { _id: '$status', count: { $sum: 1 } } },
                     { $sort: { count: -1 } }
+                    // equivalent of SQL GROUP BY status and then counts them
                 ],
                 totals: [
+                    // This computes:
+                    //   - total number of orders,
+                    //   - total revenue.
                     {
                         $group: {
                             _id: null,
@@ -251,17 +249,23 @@ export const shopAnalytics = asyncHandler(async (req, res) => {
                     }
                 ],
                 topProducts: [
+                    // breaks array elements into separate documents
                     { $unwind: '$items' },
                     {
                         $group: {
                             _id: '$items.product',
+                            // total quantity sold
                             qty: { $sum: '$items.quantity' },
+                            // total revenue generated
                             revenue: { $sum: { $multiply: ['$items.quantity', '$items.unitPrice'] } }
                         }
                     },
                     { $sort: { revenue: -1 } },
+                    // gives the top-selling products
                     { $limit: topN },
                     {
+                        // basically a MongoDB join.
+                        // it fetches product details from the products collection
                         $lookup: {
                             from: 'products',
                             localField: '_id',
@@ -288,6 +292,8 @@ export const shopAnalytics = asyncHandler(async (req, res) => {
         }
     ]);
 
+    // used $unwind, $group, and $lookup to compute top-selling products and enrich them with product details in one aggregation pipeline
+
     const totals = (result?.totals && result.totals[0]) || { orders: 0, revenue: 0 };
     const today = (result?.today && result.today[0]) || { orders: 0, revenue: 0 };
 
@@ -301,3 +307,5 @@ export const shopAnalytics = asyncHandler(async (req, res) => {
         }
     });
 });
+
+// Aggregation operations run directly on the database server, minimizing data transfer to the application. It supports index utilization, speeding up query execution on large datasets

@@ -93,7 +93,10 @@ export const listProducts = asyncHandler(async (req, res) => {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    if (list.length > 0) q.tags = { $in: list };
+    if (list.length > 0) {
+      // return products where the tags array contains any of the requested tags
+      q.tags = { $in: list };
+    }
   }
 
   const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
@@ -103,17 +106,14 @@ export const listProducts = asyncHandler(async (req, res) => {
   );
   const skipNum = (pageNum - 1) * limitNum;
 
-  // Sorting
-  // - new: createdAt desc
-  // - price_asc / price_desc
-  // - search uses $text score ordering
   let cursor = Product.find(q);
   let countQuery = q;
 
   if (search) {
-    // Prefer $text search (uses text index); fallback to regex if user passed an empty/invalid string.
+    // Prefer $text search (uses text index)
     const term = String(search).trim();
     if (term) {
+      // performs text search using MongoDB text indexes
       countQuery = { ...q, $text: { $search: term } };
       cursor = Product.find(countQuery, { score: { $meta: "textScore" } }).sort(
         { score: { $meta: "textScore" }, createdAt: -1 },
@@ -294,7 +294,7 @@ export const rankedProducts = asyncHandler(async (req, res) => {
   } = req.query;
 
   const match = { isActive: true };
-  
+
   if (search && String(search).trim()) {
     match.$text = { $search: String(search).trim() };
   }
@@ -333,11 +333,12 @@ export const rankedProducts = asyncHandler(async (req, res) => {
     const hours = windowHours !== undefined ? Number(windowHours) : null;
     if (!hours || Number.isNaN(hours) || hours <= 0) {
       return {
-        from: "votes",
-        localField: "_id",
-        foreignField: "product",
+        from: "votes",      // tells MongoDB which collection to join with
+        localField: "_id",      // the field from the current products document
+        foreignField: "product",      // the field inside the votes collection that points to the product.
         as: "votes",
       };
+      // this is so MongoDB matches products._id with votes.product when returning the filtered products
     }
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
     return {
@@ -352,9 +353,10 @@ export const rankedProducts = asyncHandler(async (req, res) => {
   })();
 
   let items = await Product.aggregate([
+    // $match => filters documents before the expensive stages happen.
     { $match: match },
     { $lookup: votesLookup },
-    { $addFields: { score: { $sum: "$votes.vote" } } },
+    { $addFields: { score: { $sum: "$votes.vote" } } },     // creates a new field called score where MongoDB takes the votes array and sums the votes values
     { $sort: { score: -1, createdAt: -1 } },
     { $limit: limitNum },
     { $project: { votes: 0 } },
@@ -367,3 +369,61 @@ export const rankedProducts = asyncHandler(async (req, res) => {
 
   res.json({ data: { items } });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * How the comeplte strucutre for the aggregation looks like
+ const items = await Product.aggregate([
+  // 1. Filter products first
+  {
+    $match: match
+  },
+
+  // 2. JOINS vote documents for each product
+  {
+    $lookup: votesLookup
+  },
+
+  // 3. Compute score by summing all vote values
+  {
+    $addFields: {
+      score: { $sum: '$votes.vote' }
+    }
+  },
+
+  // 4. Sort by highest score first, then newest first
+  {
+    $sort: {
+      score: -1,
+      createdAt: -1
+    }
+  },
+
+  // 5. Limit to top N items
+  {
+    $limit: limitNum
+  },
+
+  // 6. Remove raw votes array from the final output
+  {
+    $project: {
+      votes: 0
+    }
+  }
+]);
+ 
+ */
