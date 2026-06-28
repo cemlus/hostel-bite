@@ -5,6 +5,10 @@ import { signToken } from '../utils/jwt.js';
 import { ApiError } from '../utils/ApiError.js';
 import mongoose from 'mongoose';
 
+const escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 export const register = asyncHandler(async (req, res) => {
     const { name, email, password, hostel: hostelInput, room, role } = req.body;
     if (!name || !password) throw new ApiError(400, 'Name and password required');
@@ -24,7 +28,8 @@ export const register = asyncHandler(async (req, res) => {
             else throw new ApiError(400, 'hostel id provided but not found');
         } else {
             // treat as hostel name (case-insensitive)
-            const h = await Hostel.findOne({ name: { $regex: `^${hostelInput}$`, $options: 'i' } });
+            const escapedHostelInput = escapeRegExp(hostelInput);
+            const h = await Hostel.findOne({ name: { $regex: `^${escapedHostelInput}$`, $options: 'i' } });
             if (h) hostelId = h._id;
             else throw new ApiError(400, 'hostel name provided not found; create hostel first or provide valid id');
         }

@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { authRequired } from '../middlewares/auth.middleware.js';
+import { authRequired, shopOwnerOnly } from '../middlewares/auth.middleware.js';
 import * as productsCtrl from '../controllers/products.controller.js';
 
 const router = Router();
 
-router.post('/', authRequired, productsCtrl.createProduct);
+router.post('/', authRequired, shopOwnerOnly, productsCtrl.createProduct);
 router.get('/', authRequired, productsCtrl.listProducts);
 router.get('/ranked', authRequired, productsCtrl.rankedProducts);
 router.post('/generate-description', authRequired, productsCtrl.generateDescription);

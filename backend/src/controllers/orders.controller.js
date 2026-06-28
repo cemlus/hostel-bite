@@ -2,6 +2,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { Product } from '../models/product.model.js';
 import { Order } from '../models/order.model.js';
 import { Notification } from '../models/notification.model.js';
+import { Shop } from '../models/shop.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import mongoose from 'mongoose';
 
@@ -77,6 +78,17 @@ export const placeOrder = asyncHandler(async (req, res) => {
             body: `Your order ${order._id} was placed.`,
             payload: { orderId: order._id }
         });
+
+        // notify the shop owner
+        const shop = await Shop.findById(shopId).lean();
+        if (shop && shop.owner) {
+            await Notification.create({
+                user: shop.owner,
+                title: 'New Order Received',
+                body: `You have received a new order (ID: ${order._id}).`,
+                payload: { orderId: order._id }
+            });
+        }
 
         // respond
         res.status(201).json({ data: { orderId: order._id, status: order.status, total } });

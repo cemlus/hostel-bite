@@ -2,6 +2,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { Vote } from '../models/vote.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import { Product } from '../models/product.model.js';
+import mongoose from 'mongoose';
 
 /**
  * POST /api/products/:productId/vote
@@ -11,6 +12,15 @@ export const vote = asyncHandler(async (req, res) => {
     const productId = req.params.productId;
     const { vote } = req.body;
     if (![1, -1].includes(vote)) throw new ApiError(400, 'Invalid vote');
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+        throw new ApiError(400, 'Invalid product ID format');
+    }
+
+    const productExists = await Product.exists({ _id: productId });
+    if (!productExists) {
+        throw new ApiError(404, 'Product not found');
+    }
 
     // upsert
     const doc = await Vote.findOneAndUpdate(

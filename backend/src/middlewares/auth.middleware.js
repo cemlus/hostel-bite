@@ -18,3 +18,14 @@ export const authRequired = async (req, res, next) => {
     next(err);
   }
 };
+
+export const shopOwnerOnly = (req, res, next) => {
+  if (!req.user) {
+    throw new ApiError(401, 'Authentication required');
+  }
+  if (req.user.role !== 'shop_owner') {
+    throw new ApiError(403, 'Access denied. Shop owner role required.');
+  }
+  next();
+};
+

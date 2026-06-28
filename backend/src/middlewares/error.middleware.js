@@ -11,5 +11,10 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ error: err.message });
   }
 
+  // mongoose cast error (e.g. invalid ObjectId format)
+  if (err.name === 'CastError') {
+    return res.status(400).json({ error: `Invalid format for field ${err.path}` });
+  }
+
   return res.status(500).json({ error: 'Internal server error' });
 };
