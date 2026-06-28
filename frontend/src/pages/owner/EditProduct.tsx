@@ -9,6 +9,15 @@ import { ENDPOINTS } from '@/api/endpoints';
 
 const SUGGESTED_TAGS = ['Snacks', 'Beverages', 'Meals', 'Quick', 'Vegetarian', 'Non-Veg', 'Breakfast', 'Dessert'];
 
+interface Product {
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  images?: string[];
+  tags?: string[];
+}
+
 export default function EditProduct() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -53,7 +62,7 @@ export default function EditProduct() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await api.get<any>(ENDPOINTS.PRODUCTS.DETAIL(id!));
+        const response = await api.get<Product>(ENDPOINTS.PRODUCTS.DETAIL(id!));
         if (response.data) {
           const p = response.data;
           setName(p.name);

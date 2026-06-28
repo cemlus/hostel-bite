@@ -26,13 +26,13 @@ export function createUpiDeepLink({
 }: UpiPaymentParams): string {
   const params = new URLSearchParams({
     pa: vpa,
-    pn: encodeURIComponent(name),
+    pn: name,
     am: amount.toFixed(2),
     cu: currency,
   });
 
   if (transactionNote) {
-    params.set('tn', encodeURIComponent(transactionNote));
+    params.set('tn', transactionNote);
   }
 
   if (transactionRef) {
